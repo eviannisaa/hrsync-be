@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Employee" ADD COLUMN     "status" VARCHAR(255) NOT NULL DEFAULT 'ACTIVE';

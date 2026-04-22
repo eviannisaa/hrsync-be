@@ -1,0 +1,181 @@
+generator client {
+  provider = "go run github.com/steebchen/prisma-client-go"
+  output   = "../internal/db"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(uuid())
+  email      String    @unique @db.VarChar(255)
+  password   String    @db.VarChar(255)
+  role       Role      @default(EMPLOYEE)
+  employeeId String?   @unique
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+}
+
+model Employee {
+  id         String      @id @default(uuid())
+  name       String      @db.VarChar(255)
+  email      String      @unique @db.VarChar(255)
+  phone      String
+  department String
+  position   String
+  joinDate   DateTime
+  isActive   Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  latitude   Float?
+  longitude  Float?
+  location   String?     @db.VarChar(255)
+  createdBy  String?     @db.VarChar(255)
+  updatedBy  String?     @db.VarChar(255)
+  status     String      @default("ACTIVE") @db.VarChar(255)
+  leaves     Leave[]
+  overtimes  Overtime[]
+  payslips   Payslip[]
+  reimburses Reimburse[]
+  user       User?
+}
+
+model Payslip {
+  id        String   @id @default(uuid())
+  email     String   @db.VarChar(255)
+  fileUrl   String   @db.VarChar(255)
+  month     String   @db.VarChar(255)
+  year      String   @db.VarChar(255)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  createdBy String?  @db.VarChar(255)
+  employee  Employee @relation(fields: [email], references: [email])
+}
+
+model LeaveType {
+  id          String         @id @default(uuid())
+  name        String         @unique
+  defaultDays Int            @default(12)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  leaves      Leave[]
+  balances    LeaveBalance[]
+}
+
+model LeaveBalance {
+  id          String    @id @default(uuid())
+  email       String
+  leaveTypeId String
+  total       Int
+  used        Int       @default(0)
+  remaining   Int
+  year        Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  leaveType   LeaveType @relation(fields: [leaveTypeId], references: [id])
+
+  @@unique([email, leaveTypeId, year])
+}
+
+model Leave {
+  id          String    @id @default(uuid())
+  email       String    @db.VarChar(255)
+  reason      String    @db.VarChar(255)
+  status      String    @default("SUBMITTED") @db.VarChar(255)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+  leaveTypeId String
+  endDate     DateTime
+  startDate   DateTime
+  createdBy   String?   @db.VarChar(255)
+  updatedBy   String?   @db.VarChar(255)
+  employee    Employee  @relation(fields: [email], references: [email])
+  leaveType   LeaveType @relation(fields: [leaveTypeId], references: [id])
+}
+
+model Overtime {
+  id          String   @id @default(uuid())
+  email       String   @db.VarChar(255)
+  type        String   @db.VarChar(255)
+  description String   @db.VarChar(255)
+  status      String   @default("SUBMITTED") @db.VarChar(255)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  duration    Float    @default(0)
+  endDate     DateTime
+  endTime     String   @db.VarChar(255)
+  startDate   DateTime
+  startTime   String   @db.VarChar(255)
+  employee    Employee @relation(fields: [email], references: [email])
+}
+
+model Reimburse {
+  id            String   @id @default(uuid())
+  email         String   @db.VarChar(255)
+  amount        Int
+  description   String   @db.VarChar(255)
+  status        String   @default("SUBMITTED") @db.VarChar(255)
+  attachBill    String   @db.VarChar(255)
+  paymentProof  String   @db.VarChar(255)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+  creatorRole   String?  @default("EMPLOYEE") @db.VarChar(255)
+  updatedByRole String?  @db.VarChar(255)
+  employee      Employee @relation(fields: [email], references: [email])
+}
+
+model Feedback {
+  id                         String   @id @default(uuid())
+  email                      String   @db.VarChar(255)
+  employeeName               String   @db.VarChar(255)
+  employeeEmail              String   @db.VarChar(255)
+  employeeDepartment         String   @db.VarChar(255)
+  month                      String   @db.VarChar(255)
+  isAnonymouse               Boolean  @default(true)
+  positiveExperience         String   @db.VarChar(255)
+  suggestion                 String   @default("SUBMITTED") @db.VarChar(255)
+  workEnvironment            Int
+  workQualityReliability     Int
+  collaborationCommunication Int
+  workLifeBalance            Int
+  criticalThinking           Int
+  overallSatisfaction        Int
+  score                      Int
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @default(now()) @updatedAt
+}
+
+model TemplateKPI {
+  id           String   @id @default(uuid())
+  email        String   @db.VarChar(255)
+  department   String   @db.VarChar(255)
+  templateName String   @db.VarChar(255)
+  description  String   @db.VarChar(255)
+  attachment   String   @db.VarChar(255)
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+}
+
+model Holiday {
+  id           String   @id @default(uuid())
+  name         String
+  date         DateTime @unique
+  isCollective Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model EmployeeOrganization {
+  id                String   @id @default(uuid())
+  organizationImage String?  @db.VarChar(255)
+  updatedAt         DateTime @updatedAt
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}

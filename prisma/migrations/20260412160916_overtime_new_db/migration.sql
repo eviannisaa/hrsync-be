@@ -1,0 +1,13 @@
+-- CreateTable
+CREATE TABLE "Overtime" (
+    "id" TEXT NOT NULL,
+    "email" VARCHAR(255) NOT NULL,
+    "time" TIMESTAMP(3) NOT NULL,
+    "type" VARCHAR(255) NOT NULL,
+    "description" VARCHAR(255) NOT NULL,
+    "status" VARCHAR(255) NOT NULL DEFAULT 'SUBMITTED',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Overtime_pkey" PRIMARY KEY ("id")
+);
