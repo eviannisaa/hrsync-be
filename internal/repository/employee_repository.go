@@ -14,6 +14,7 @@ type EmployeeRepository interface {
 	Create(ctx context.Context, req dto.CreateEmployeeRequest) (*dto.EmployeeResponse, error)
 	Update(ctx context.Context, id string, req dto.UpdateEmployeeRequest) (*dto.EmployeeResponse, error)
 	Delete(ctx context.Context, id string) error
+	GetByEmail(ctx context.Context, email string) (*dto.EmployeeResponse, error)
 	GetOrganization(ctx context.Context) (*dto.EmployeeOrganizationResponse, error)
 	UpdateOrganization(ctx context.Context, req dto.UpdateEmployeeOrganizationRequest) (*dto.EmployeeOrganizationResponse, error)
 }
@@ -191,6 +192,20 @@ func (r *employeeRepository) Delete(ctx context.Context, id string) error {
 		db.Employee.ID.Equals(id),
 	).Delete().Exec(ctx)
 	return err
+}
+
+func (r *employeeRepository) GetByEmail(ctx context.Context, email string) (*dto.EmployeeResponse, error) {
+	du, err := r.client.Employee.FindUnique(
+		db.Employee.Email.Equals(email),
+	).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.EmployeeResponse{
+		InnerEmployee: du.InnerEmployee,
+		Status:        du.Status,
+	}, nil
 }
 
 func (r *employeeRepository) GetOrganization(ctx context.Context) (*dto.EmployeeOrganizationResponse, error) {

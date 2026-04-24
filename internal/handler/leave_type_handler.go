@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"hrsync-backend/internal/middleware"
+	"hrsync-backend/internal/model"
 	"hrsync-backend/internal/service"
 	"hrsync-backend/internal/utils"
 	"net/http"
@@ -25,7 +25,7 @@ func (h *LeaveTypeHandler) GetLeaveTypes(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *LeaveTypeHandler) GetMyCredits(w http.ResponseWriter, r *http.Request) {
-	email, ok := r.Context().Value(middleware.ContextKeyEmail).(string)
+	email, ok := r.Context().Value(model.ContextKeyEmail).(string)
 	if !ok {
 		utils.SendError(w, "unauthorized", http.StatusUnauthorized)
 		return

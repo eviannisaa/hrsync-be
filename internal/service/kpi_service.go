@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"hrsync-backend/internal/dto"
+	"hrsync-backend/internal/model"
 	"hrsync-backend/internal/repository"
 	"hrsync-backend/internal/utils"
 	"strings"
@@ -11,7 +12,7 @@ import (
 )
 
 type TemplateKPIService interface {
-	GetTemplatesKPI(ctx context.Context) ([]dto.TemplateKPIResponse, int, error)
+	GetTemplatesKPI(ctx context.Context, params model.ListParams) ([]dto.TemplateKPIResponse, int, error)
 	GetPublishedTemplatesKPIByDepartment(ctx context.Context, department string) ([]dto.TemplateKPIResponse, error)
 	CreateTemplateKPI(ctx context.Context, req dto.CreateTemplateKPIRequest) (*dto.TemplateKPIResponse, error)
 	UpdateTemplateKPI(ctx context.Context, id string, req dto.UpdateTemplateKPIRequest) (*dto.TemplateKPIResponse, error)
@@ -26,15 +27,16 @@ func NewTemplateKPIService(repo repository.TemplateKPIRepository) TemplateKPISer
 	return &templateKPIService{repo: repo}
 }
 
-func (s *templateKPIService) GetTemplatesKPI(ctx context.Context) ([]dto.TemplateKPIResponse, int, error) {
-	templates, total, err := s.repo.GetAll(ctx)
+func (s *templateKPIService) GetTemplatesKPI(ctx context.Context, params model.ListParams) ([]dto.TemplateKPIResponse, int, error) {
+	templates, total, err := s.repo.GetAll(ctx, params)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	for i := range templates {
-		if templates[i].Attachment != "" {
-			templates[i].Attachment = utils.GetURL(templates[i].Attachment)
+		if templates[i].Attachment != nil && *templates[i].Attachment != "" {
+			url := utils.GetURL(*templates[i].Attachment)
+			templates[i].Attachment = &url
 		}
 	}
 
@@ -48,8 +50,9 @@ func (s *templateKPIService) GetPublishedTemplatesKPIByDepartment(ctx context.Co
 	}
 
 	for i := range templates {
-		if templates[i].Attachment != "" {
-			templates[i].Attachment = utils.GetURL(templates[i].Attachment)
+		if templates[i].Attachment != nil && *templates[i].Attachment != "" {
+			url := utils.GetURL(*templates[i].Attachment)
+			templates[i].Attachment = &url
 		}
 	}
 
@@ -72,13 +75,13 @@ func (s *templateKPIService) CreateTemplateKPI(ctx context.Context, req dto.Crea
 
 func (s *templateKPIService) UpdateTemplateKPI(ctx context.Context, id string, req dto.UpdateTemplateKPIRequest) (*dto.TemplateKPIResponse, error) {
 	// Handle Base64 upload if present
-	if req.Attachment != "" && strings.Contains(req.Attachment, ";base64,") {
+	if req.Attachment != nil && *req.Attachment != "" && strings.Contains(*req.Attachment, ";base64,") {
 		objectName := fmt.Sprintf("kpi/%d-attachment", time.Now().UnixNano())
-		path, err := utils.UploadBase64(ctx, req.Attachment, objectName)
+		path, err := utils.UploadBase64(ctx, *req.Attachment, objectName)
 		if err != nil {
 			return nil, fmt.Errorf("storage upload failed: %w", err)
 		}
-		req.Attachment = path
+		req.Attachment = &path
 	}
 
 	return s.repo.Update(ctx, id, req)

@@ -18,7 +18,8 @@ type AuthResponse struct {
 }
 
 type UserInfoResponse struct {
-	ID    string `json:"id"`
-	Email string `json:"email"`
-	Role  string `json:"role"`
+	ID       string            `json:"id"`
+	Email    string            `json:"email"`
+	Role     string            `json:"role"`
+	Employee *EmployeeResponse `json:"employee,omitempty"`
 }

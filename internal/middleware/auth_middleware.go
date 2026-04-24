@@ -2,17 +2,10 @@ package middleware
 
 import (
 	"context"
+	"hrsync-backend/internal/model"
 	"hrsync-backend/internal/utils"
 	"net/http"
 	"strings"
-)
-
-type contextKey string
-
-const (
-	ContextKeyUserID contextKey = "userID"
-	ContextKeyEmail  contextKey = "email"
-	ContextKeyRole   contextKey = "role"
 )
 
 // AuthMiddleware memvalidasi JWT token dari header Authorization: Bearer <token>.
@@ -49,9 +42,9 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Simpan claims ke context
-		ctx := context.WithValue(r.Context(), ContextKeyUserID, claims.UserID)
-		ctx = context.WithValue(ctx, ContextKeyEmail, claims.Email)
-		ctx = context.WithValue(ctx, ContextKeyRole, claims.Role)
+		ctx := context.WithValue(r.Context(), model.ContextKeyUserID, claims.UserID)
+		ctx = context.WithValue(ctx, model.ContextKeyEmail, claims.Email)
+		ctx = context.WithValue(ctx, model.ContextKeyRole, claims.Role)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -67,7 +60,7 @@ func RoleMiddleware(allowedRoles ...string) func(http.Handler) http.Handler {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			role, ok := r.Context().Value(ContextKeyRole).(string)
+			role, ok := r.Context().Value(model.ContextKeyRole).(string)
 			if !ok {
 				utils.SendError(w, "unauthorized", http.StatusUnauthorized)
 				return

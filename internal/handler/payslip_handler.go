@@ -2,7 +2,7 @@ package handler
 
 import (
 	"hrsync-backend/internal/dto"
-	"hrsync-backend/internal/middleware"
+	"hrsync-backend/internal/model"
 	"hrsync-backend/internal/service"
 	"hrsync-backend/internal/utils"
 	"io"
@@ -20,8 +20,8 @@ func NewPayslipHandler(srv service.PayslipService) *PayslipHandler {
 func (h *PayslipHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	email := r.URL.Query().Get("email")
 	
-	role, _ := r.Context().Value(middleware.ContextKeyRole).(string)
-	userEmail, _ := r.Context().Value(middleware.ContextKeyEmail).(string)
+	role, _ := r.Context().Value(model.ContextKeyRole).(string)
+	userEmail, _ := r.Context().Value(model.ContextKeyEmail).(string)
 
 	// Security: If user is EMPLOYEE, override email param to their own email
 	if role == "EMPLOYEE" {
@@ -78,7 +78,7 @@ func (h *PayslipHandler) BulkUpload(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	createdBy, _ := r.Context().Value(middleware.ContextKeyEmail).(string)
+	createdBy, _ := r.Context().Value(model.ContextKeyEmail).(string)
 	if createdBy == "" {
 		createdBy = "Administrator"
 	}

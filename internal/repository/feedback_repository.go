@@ -22,23 +22,8 @@ func NewFeedbackRepository(client *db.PrismaClient) FeedbackRepository {
 }
 
 func (r *feedbackRepository) calculateScore(req dto.CreateFeedbackRequest) int {
-	score := 0
-	if req.WorkEnvironment > 0 {
-		score++
-	}
-	if req.WorkQualityReliability > 0 {
-		score++
-	}
-	if req.CollaborationCommunication > 0 {
-		score++
-	}
-	if req.CriticalThinking > 0 {
-		score++
-	}
-	if req.OverallSatisfaction > 0 {
-		score++
-	}
-	return score
+	// The star rating is specifically calculated from the 'Work Experience' rate
+	return req.WorkEnvironment
 }
 
 func (r *feedbackRepository) GetAll(ctx context.Context, params model.ListParams) ([]dto.FeedbackResponse, int, error) {
@@ -46,11 +31,10 @@ func (r *feedbackRepository) GetAll(ctx context.Context, params model.ListParams
 
 	var filters []db.FeedbackWhereParam
 	if params.Search != "" {
+		// Filter by EmployeeEmail strictly to get feedback RECEIVED BY that person
+		// This ensures FeedbackOverview and FeedbackList show feedback FROM OTHERS.
 		filters = append(filters,
-			db.Feedback.Or(
-				db.Feedback.EmployeeName.Contains(params.Search),
-				db.Feedback.EmployeeEmail.Contains(params.Search),
-			),
+			db.Feedback.EmployeeEmail.Contains(params.Search),
 		)
 	}
 
@@ -78,7 +62,28 @@ func (r *feedbackRepository) GetAll(ctx context.Context, params model.ListParams
 
 	responses := make([]dto.FeedbackResponse, 0, len(dbFeedback))
 	for _, du := range dbFeedback {
-		responses = append(responses, dto.FeedbackResponse{InnerFeedback: du.InnerFeedback})
+		createdAt := du.CreatedAt
+		updatedAt := du.UpdatedAt
+		responses = append(responses, dto.FeedbackResponse{
+			ID:                         du.ID,
+			Email:                      du.Email,
+			EmployeeName:               du.EmployeeName,
+			EmployeeEmail:              du.EmployeeEmail,
+			EmployeeDepartment:         du.EmployeeDepartment,
+			Month:                      du.Month,
+			IsAnonymouse:               du.IsAnonymouse,
+			PositiveExperience:         du.PositiveExperience,
+			Suggestion:                 du.Suggestion,
+			WorkEnvironment:            du.WorkEnvironment,
+			WorkQualityReliability:     du.WorkQualityReliability,
+			CollaborationCommunication: du.CollaborationCommunication,
+			WorkLifeBalance:            du.WorkLifeBalance,
+			CriticalThinking:           du.CriticalThinking,
+			OverallSatisfaction:        du.OverallSatisfaction,
+			Score:                      float64(du.Score),
+			CreatedAt:                  &createdAt,
+			UpdatedAt:                  &updatedAt,
+		})
 	}
 
 	return responses, len(allFeedback), nil
@@ -109,7 +114,28 @@ func (r *feedbackRepository) Create(ctx context.Context, req dto.CreateFeedbackR
 		return nil, err
 	}
 
-	return &dto.FeedbackResponse{InnerFeedback: du.InnerFeedback}, nil
+	createdAt := du.CreatedAt
+	updatedAt := du.UpdatedAt
+	return &dto.FeedbackResponse{
+		ID:                         du.ID,
+		Email:                      du.Email,
+		EmployeeName:               du.EmployeeName,
+		EmployeeEmail:              du.EmployeeEmail,
+		EmployeeDepartment:         du.EmployeeDepartment,
+		Month:                      du.Month,
+		IsAnonymouse:               du.IsAnonymouse,
+		PositiveExperience:         du.PositiveExperience,
+		Suggestion:                 du.Suggestion,
+		WorkEnvironment:            du.WorkEnvironment,
+		WorkQualityReliability:     du.WorkQualityReliability,
+		CollaborationCommunication: du.CollaborationCommunication,
+		WorkLifeBalance:            du.WorkLifeBalance,
+		CriticalThinking:           du.CriticalThinking,
+		OverallSatisfaction:        du.OverallSatisfaction,
+		Score:                      float64(du.Score),
+		CreatedAt:                  &createdAt,
+		UpdatedAt:                  &updatedAt,
+	}, nil
 }
 
 func (r *feedbackRepository) Delete(ctx context.Context, id string) error {

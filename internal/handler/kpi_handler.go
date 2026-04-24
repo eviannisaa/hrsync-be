@@ -17,12 +17,13 @@ func NewTemplateKPIHandler(srv service.TemplateKPIService) *TemplateKPIHandler {
 }
 
 func (h *TemplateKPIHandler) GetTemplatesKPI(w http.ResponseWriter, r *http.Request) {
-	responses, total, err := h.srv.GetTemplatesKPI(r.Context())
+	params := utils.GetListParams(r)
+	responses, total, err := h.srv.GetTemplatesKPI(r.Context(), params)
 	if err != nil {
 		utils.SendError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	utils.SendPaginated(w, "KPI Templates retrieved successfully", responses, total, 1, 10)
+	utils.SendPaginated(w, "KPI Templates retrieved successfully", responses, total, params.Page, params.Limit)
 }
 
 func (h *TemplateKPIHandler) GetPublishedKPIByDepartment(w http.ResponseWriter, r *http.Request) {

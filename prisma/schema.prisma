@@ -149,15 +149,31 @@ model Feedback {
 }
 
 model TemplateKPI {
-  id           String   @id @default(uuid())
-  email        String   @db.VarChar(255)
-  department   String   @db.VarChar(255)
-  templateName String   @db.VarChar(255)
-  description  String   @db.VarChar(255)
-  attachment   String   @db.VarChar(255)
-  isPublished  Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now()) @updatedAt
+  id           String    @id @default(uuid())
+  email        String    @db.VarChar(255)
+  department   String    @db.VarChar(255)
+  templateName String    @db.VarChar(255)
+  description  String    @db.VarChar(255)
+  attachment   String?   @db.VarChar(255)
+  isPublished  Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now()) @updatedAt
+  items        KPIItem[]
+}
+
+model KPIItem {
+  id           String      @id @default(uuid())
+  templateId   String
+  nameResult   String      @db.VarChar(255)
+  kpiResult    String      @db.Text
+  weight       Float
+  target       Float
+  actual       Float
+  score        Float
+  finalScore   Float
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @default(now()) @updatedAt
+  template     TemplateKPI @relation(fields: [templateId], references: [id], onDelete: Cascade)
 }
 
 model Holiday {

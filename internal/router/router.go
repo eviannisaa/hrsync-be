@@ -22,7 +22,7 @@ func NewRouter(
 	mux := http.NewServeMux()
 
 	// Auth routes (public)
-	RegisterAuthRoutes(mux, authHandler)
+	RegisterAuthRoutes(mux, authHandler, employeeHandler.GetRepo())
 
 	// Resource routes
 	RegisterTeamRoutes(mux, employeeHandler)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"hrsync-backend/internal/dto"
 	"hrsync-backend/internal/model"
+	"hrsync-backend/internal/repository"
 	"hrsync-backend/internal/service"
 	"hrsync-backend/internal/utils"
 	"net/http"
@@ -119,4 +120,8 @@ func (h *EmployeeHandler) UpdateOrganization(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	utils.SendSuccess(w, "Organization updated successfully", response, http.StatusOK)
+}
+
+func (h *EmployeeHandler) GetRepo() repository.EmployeeRepository {
+	return h.srv.GetRepo()
 }

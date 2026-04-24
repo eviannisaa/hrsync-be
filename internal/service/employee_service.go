@@ -15,6 +15,7 @@ type EmployeeService interface {
 	DeleteEmployee(ctx context.Context, id string) error
 	GetOrganization(ctx context.Context) (*dto.EmployeeOrganizationResponse, error)
 	UpdateOrganization(ctx context.Context, req dto.UpdateEmployeeOrganizationRequest) (*dto.EmployeeOrganizationResponse, error)
+	GetRepo() repository.EmployeeRepository
 }
 
 type employeeService struct {
@@ -51,4 +52,8 @@ func (s *employeeService) GetOrganization(ctx context.Context) (*dto.EmployeeOrg
 
 func (s *employeeService) UpdateOrganization(ctx context.Context, req dto.UpdateEmployeeOrganizationRequest) (*dto.EmployeeOrganizationResponse, error) {
 	return s.repo.UpdateOrganization(ctx, req)
+}
+
+func (s *employeeService) GetRepo() repository.EmployeeRepository {
+	return s.repo
 }
