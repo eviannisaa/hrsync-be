@@ -29,6 +29,11 @@ func (r *reimburseRepository) GetAll(ctx context.Context, params model.ListParam
 
 	// Build filter
 	var filters []db.ReimburseWhereParam
+
+	if params.Email != "" {
+		filters = append(filters, db.Reimburse.Email.Equals(params.Email))
+	}
+
 	if params.Search != "" {
 		var rawRes []struct {
 			ID string `json:"id"`

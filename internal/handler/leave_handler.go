@@ -20,11 +20,13 @@ func NewLeaveHandler(srv service.LeaveService) *LeaveHandler {
 func (h *LeaveHandler) GetLeaves(w http.ResponseWriter, r *http.Request) {
 	params := utils.GetListParams(r)
 
-	// If user is non-admin, filter by their email. 
-	// If admin, they see all unless they specifically ask for their own via ?mine=true
-	isMine := r.URL.Query().Get("mine") == "true"
-	if params.Role != "ADMIN" || isMine {
-		params.Email = params.Email
+	// If admin, they see all unless they specifically ask for their own via ?mine=true 
+	// or ask for a specific email via ?email=...
+	if params.Role == "ADMIN" {
+		isMine := r.URL.Query().Get("mine") == "true"
+		if !isMine {
+			params.Email = r.URL.Query().Get("email")
+		}
 	}
 
 	responses, total, err := h.srv.GetLeaves(r.Context(), params)

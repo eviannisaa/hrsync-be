@@ -31,6 +31,11 @@ func (r *overtimeRepository) GetAll(ctx context.Context, params model.ListParams
 
 	// Build filter
 	var filters []db.OvertimeWhereParam
+
+	if params.Email != "" {
+		filters = append(filters, db.Overtime.Email.Equals(params.Email))
+	}
+
 	if params.Search != "" {
 		var rawRes []struct {
 			ID string `json:"id"`

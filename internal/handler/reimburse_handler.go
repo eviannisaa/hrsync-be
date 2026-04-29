@@ -3,11 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"hrsync-backend/internal/dto"
-	"hrsync-backend/internal/model"
 	"hrsync-backend/internal/service"
 	"hrsync-backend/internal/utils"
 	"net/http"
-	"strconv"
 )
 
 type ReimburseHandler struct {
@@ -19,21 +17,12 @@ func NewReimburseHandler(srv service.ReimburseService) *ReimburseHandler {
 }
 
 func (h *ReimburseHandler) GetReimbursements(w http.ResponseWriter, r *http.Request) {
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-	if page < 1 {
-		page = 1
-	}
-	if limit < 1 {
-		limit = 10
-	}
+	params := utils.GetListParams(r)
 
-	params := model.ListParams{
-		Page:    page,
-		Limit:   limit,
-		Search:  r.URL.Query().Get("search"),
-		SortBy:  r.URL.Query().Get("sortBy"),
-		SortDir: r.URL.Query().Get("sortDir"),
+	// Filter by email if employee, or if admin provides email param.
+	// If admin and no email param provided, Email will be cleared to show all.
+	if params.Role == "ADMIN" {
+		params.Email = r.URL.Query().Get("email")
 	}
 
 	responses, total, err := h.srv.GetAll(r.Context(), params)
@@ -41,7 +30,7 @@ func (h *ReimburseHandler) GetReimbursements(w http.ResponseWriter, r *http.Requ
 		utils.SendError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	utils.SendPaginated(w, "Reimbursements retrieved successfully", responses, total, page, limit)
+	utils.SendPaginated(w, "Reimbursements retrieved successfully", responses, total, params.Page, params.Limit)
 }
 
 func (h *ReimburseHandler) CreateReimbursement(w http.ResponseWriter, r *http.Request) {

@@ -23,10 +23,12 @@ type FeedbackResponse struct {
 	Score                      float64    `json:"score"`
 	CreatedAt                  *time.Time `json:"createdAt"`
 	UpdatedAt                  *time.Time `json:"updatedAt"`
+	CreatedBy                  string     `json:"createdBy"`
 }
 
 type CreateFeedbackRequest struct {
 	Email                      string `json:"email"`
+	CreatedBy                  string `json:"createdBy"`
 	EmployeeName               string `json:"employeeName"`
 	EmployeeEmail              string `json:"employeeEmail"`
 	EmployeeDepartment         string `json:"employeeDepartment"`

@@ -64,6 +64,7 @@ func (r *feedbackRepository) GetAll(ctx context.Context, params model.ListParams
 	for _, du := range dbFeedback {
 		createdAt := du.CreatedAt
 		updatedAt := du.UpdatedAt
+		createdBy, _ := du.CreatedBy()
 		responses = append(responses, dto.FeedbackResponse{
 			ID:                         du.ID,
 			Email:                      du.Email,
@@ -83,6 +84,7 @@ func (r *feedbackRepository) GetAll(ctx context.Context, params model.ListParams
 			Score:                      float64(du.Score),
 			CreatedAt:                  &createdAt,
 			UpdatedAt:                  &updatedAt,
+			CreatedBy:                  string(createdBy),
 		})
 	}
 
@@ -108,6 +110,7 @@ func (r *feedbackRepository) Create(ctx context.Context, req dto.CreateFeedbackR
 		db.Feedback.Score.Set(score),
 		db.Feedback.IsAnonymouse.Set(req.IsAnonymouse),
 		db.Feedback.Suggestion.Set(req.Suggestion),
+		db.Feedback.CreatedBy.Set(req.CreatedBy),
 	).Exec(ctx)
 
 	if err != nil {
@@ -116,6 +119,7 @@ func (r *feedbackRepository) Create(ctx context.Context, req dto.CreateFeedbackR
 
 	createdAt := du.CreatedAt
 	updatedAt := du.UpdatedAt
+	createdBy, _ := du.CreatedBy()
 	return &dto.FeedbackResponse{
 		ID:                         du.ID,
 		Email:                      du.Email,
@@ -135,6 +139,7 @@ func (r *feedbackRepository) Create(ctx context.Context, req dto.CreateFeedbackR
 		Score:                      float64(du.Score),
 		CreatedAt:                  &createdAt,
 		UpdatedAt:                  &updatedAt,
+		CreatedBy:                  string(createdBy),
 	}, nil
 }
 
