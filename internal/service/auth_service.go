@@ -9,6 +9,7 @@ import (
 type AuthService interface {
 	Register(ctx context.Context, req dto.RegisterRequest) (*dto.AuthResponse, error)
 	Login(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponse, error)
+	GeneratePassword(ctx context.Context, employeeId string) (string, error)
 }
 
 type authService struct {
@@ -25,4 +26,8 @@ func (s *authService) Register(ctx context.Context, req dto.RegisterRequest) (*d
 
 func (s *authService) Login(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponse, error) {
 	return s.repo.Login(ctx, req)
+}
+
+func (s *authService) GeneratePassword(ctx context.Context, employeeId string) (string, error) {
+	return s.repo.GeneratePassword(ctx, employeeId)
 }

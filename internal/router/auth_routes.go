@@ -4,16 +4,19 @@ import (
 	"hrsync-backend/internal/handler"
 	"hrsync-backend/internal/middleware"
 	"hrsync-backend/internal/model"
-	"hrsync-backend/internal/repository"
 	"hrsync-backend/internal/utils"
 	"net/http"
 )
 
-func RegisterAuthRoutes(mux *http.ServeMux, authHandler *handler.AuthHandler, employeeRepo repository.EmployeeRepository) {
+func RegisterAuthRoutes(mux *http.ServeMux, authHandler *handler.AuthHandler, employeeHandler *handler.EmployeeHandler) {
 	// Public routes — tidak butuh auth
 	mux.HandleFunc("POST /api/auth/register", authHandler.Register)
+	mux.HandleFunc("POST /api/auth/register-employee", employeeHandler.CreateEmployee)
 	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
 	mux.HandleFunc("POST /api/auth/logout", authHandler.Logout)
+
+	// Protected Generate Password route
+	mux.Handle("POST /api/employees/{id}/generate-password", middleware.AuthMiddleware(http.HandlerFunc(authHandler.GeneratePassword)))
 
 	mux.Handle("GET /api/auth/me", middleware.AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := r.Context().Value(model.ContextKeyUserID).(string)
@@ -21,7 +24,7 @@ func RegisterAuthRoutes(mux *http.ServeMux, authHandler *handler.AuthHandler, em
 		role, _ := r.Context().Value(model.ContextKeyRole).(string)
 
 		// Fetch employee info for department info
-		employee, _ := employeeRepo.GetByEmail(r.Context(), email)
+		employee, _ := employeeHandler.GetRepo().GetByEmail(r.Context(), email)
 
 		// Frontend ekspektasi response.data.user
 		// token tidak perlu dikirim ulang di /me

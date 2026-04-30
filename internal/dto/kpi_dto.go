@@ -5,15 +5,7 @@ import (
 )
 
 type KPIItemDTO struct {
-	ID         string `json:"id"`
-	TemplateID string `json:"templateId"`
-	NameResult string `json:"nameResult"`
-	KpiResult  string `json:"kpiResult"`
-	Weight     float64 `json:"weight"`
-	Target     float64 `json:"target"`
-	Actual     float64 `json:"actual"`
-	Score      float64 `json:"score"`
-	FinalScore float64 `json:"finalScore"`
+	db.InnerKPIItem
 }
 
 type TemplateKPIResponse struct {

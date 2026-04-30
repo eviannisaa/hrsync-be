@@ -15,6 +15,7 @@ type LeaveService interface {
 	RejectLeave(ctx context.Context, id string) (*dto.LeaveResponse, error)
 	DeleteLeaves(ctx context.Context, id string) error
 	GetLeaveSummary(ctx context.Context) ([]dto.LeaveStatusSummary, error)
+	AutoUpdateStatus(ctx context.Context) error
 }
 
 type leaveService struct {
@@ -26,7 +27,6 @@ func NewLeaveService(repo repository.LeaveRepository) LeaveService {
 }
 
 func (s *leaveService) GetLeaves(ctx context.Context, params model.ListParams) ([]dto.LeaveResponse, int, error) {
-	_ = s.repo.AutoUpdateOngoing(ctx)
 	return s.repo.GetAll(ctx, params)
 }
 
@@ -51,6 +51,9 @@ func (s *leaveService) RejectLeave(ctx context.Context, id string) (*dto.LeaveRe
 }
 
 func (s *leaveService) GetLeaveSummary(ctx context.Context) ([]dto.LeaveStatusSummary, error) {
-	_ = s.repo.AutoUpdateOngoing(ctx)
 	return s.repo.GetSummary(ctx)
+}
+
+func (s *leaveService) AutoUpdateStatus(ctx context.Context) error {
+	return s.repo.AutoUpdateOngoing(ctx)
 }

@@ -14,20 +14,24 @@ type OvertimeResponse struct {
 }
 
 type CreateOvertimeRequest struct {
-	Email       string    `json:"email"`
-	StartDate   time.Time `json:"startDate"`
-	EndDate     time.Time `json:"endDate"`
-	StartTime   string    `json:"startTime"`
-	EndTime     string    `json:"endTime"`
-	Type        string    `json:"type"`
-	Description string    `json:"description"`
+	Email             string    `json:"email"`
+	StartDate         time.Time `json:"startDate"`
+	EndDate           time.Time `json:"endDate"`
+	StartTime         string    `json:"startTime"`
+	EndTime           string    `json:"endTime"`
+	Type              string    `json:"type"`
+	Description       string    `json:"description"`
+	IsDeployment      bool      `json:"isDeployment"`
+	IsAdditionalLeave bool      `json:"isAdditionalLeave"`
 }
 
 type UpdateOvertimeRequest struct {
-	StartDate   *time.Time `json:"startDate"`
-	EndDate     *time.Time `json:"endDate"`
-	StartTime   *string    `json:"startTime"`
-	EndTime     *string    `json:"endTime"`
-	Type        *string    `json:"type"`
-	Description *string    `json:"description"`
+	StartDate         *time.Time `json:"startDate"`
+	EndDate           *time.Time `json:"endDate"`
+	StartTime         *string    `json:"startTime"`
+	EndTime           *string    `json:"endTime"`
+	Type              *string    `json:"type"`
+	Description       *string    `json:"description"`
+	IsDeployment      *bool      `json:"isDeployment"`
+	IsAdditionalLeave *bool      `json:"isAdditionalLeave"`
 }

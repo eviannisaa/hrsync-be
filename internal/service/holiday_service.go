@@ -2,12 +2,11 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"hrsync-backend/internal/dto"
 	"hrsync-backend/internal/repository"
+	"hrsync-backend/pkg/external"
 	"log"
-	"net/http"
 	"time"
 )
 
@@ -18,10 +17,14 @@ type HolidayService interface {
 
 type holidayService struct {
 	repo repository.HolidayRepository
+	api  external.HolidayAPI
 }
 
-func NewHolidayService(repo repository.HolidayRepository) HolidayService {
-	return &holidayService{repo: repo}
+func NewHolidayService(repo repository.HolidayRepository, api external.HolidayAPI) HolidayService {
+	return &holidayService{
+		repo: repo,
+		api:  api,
+	}
 }
 
 func (s *holidayService) GetHolidays(ctx context.Context) ([]dto.HolidayResponse, error) {
@@ -29,22 +32,9 @@ func (s *holidayService) GetHolidays(ctx context.Context) ([]dto.HolidayResponse
 }
 
 func (s *holidayService) SyncHolidays(ctx context.Context, year int) error {
-	url := fmt.Sprintf("https://tanggalmerah.upset.dev/api/holidays?year=%d", year)
-	resp, err := http.Get(url)
+	response, err := s.api.FetchHolidays(year)
 	if err != nil {
 		log.Printf("[HolidayService] Error fetching holidays for %d: %v", year, err)
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		log.Printf("[HolidayService] Error status code for %d: %d", year, resp.StatusCode)
-		return fmt.Errorf("failed to fetch holidays: status %d", resp.StatusCode)
-	}
-
-	var response dto.SyncHolidayResponse
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		log.Printf("[HolidayService] Error decoding response for %d: %v", year, err)
 		return err
 	}
 

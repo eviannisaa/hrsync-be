@@ -15,6 +15,7 @@ type AuthRepository interface {
 	Create(ctx context.Context, email, hashedPassword string, role db.Role, employeeId *string) (*db.UserModel, error)
 	Register(ctx context.Context, req dto.RegisterRequest) (*dto.AuthResponse, error)
 	Login(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponse, error)
+	GeneratePassword(ctx context.Context, employeeId string) (string, error)
 }
 
 type authRepository struct {
@@ -88,14 +89,16 @@ func (r *authRepository) Register(ctx context.Context, req dto.RegisterRequest) 
 		return nil, err
 	}
 
-	return &dto.AuthResponse{
+	res := &dto.AuthResponse{
 		Token: token,
 		User: dto.UserInfoResponse{
 			ID:    user.ID,
 			Email: user.Email,
 			Role:  string(user.Role),
 		},
-	}, nil
+	}
+
+	return res, nil
 }
 
 func (r *authRepository) Login(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponse, error) {
@@ -116,12 +119,49 @@ func (r *authRepository) Login(ctx context.Context, req dto.LoginRequest) (*dto.
 		return nil, err
 	}
 
-	return &dto.AuthResponse{
+	res := &dto.AuthResponse{
 		Token: token,
 		User: dto.UserInfoResponse{
 			ID:    user.ID,
 			Email: user.Email,
 			Role:  string(user.Role),
 		},
-	}, nil
+	}
+
+	return res, nil
+}
+
+func (r *authRepository) GeneratePassword(ctx context.Context, employeeId string) (string, error) {
+	// 1. Fetch the employee
+	emp, err := r.client.Employee.FindUnique(db.Employee.ID.Equals(employeeId)).Exec(ctx)
+	if err != nil {
+		return "", errors.New("employee not found")
+	}
+
+	// 2. Generate random 8-char password
+	plainPassword := utils.GenerateRandomString(8)
+	hashed, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+
+	// 3. Check if user exists
+	existing, _ := r.GetByEmail(ctx, emp.Email)
+	if existing != nil {
+		// Update password
+		_, err = r.client.User.FindUnique(db.User.ID.Equals(existing.ID)).Update(
+			db.User.Password.Set(string(hashed)),
+		).Exec(ctx)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		// Create new user
+		_, err = r.Create(ctx, emp.Email, string(hashed), db.RoleEmployee, &emp.ID)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return plainPassword, nil
 }

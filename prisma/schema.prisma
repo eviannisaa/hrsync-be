@@ -106,10 +106,12 @@ model Overtime {
   updatedAt   DateTime @default(now()) @updatedAt
   duration    Float    @default(0)
   endDate     DateTime
-  endTime     String   @db.VarChar(255)
-  startDate   DateTime
-  startTime   String   @db.VarChar(255)
-  employee    Employee @relation(fields: [email], references: [email])
+  endTime           String   @db.VarChar(255)
+  startDate         DateTime
+  startTime         String   @db.VarChar(255)
+  isDeployment      Boolean  @default(false)
+  isAdditionalLeave Boolean  @default(false)
+  employee          Employee @relation(fields: [email], references: [email])
 }
 
 model Reimburse {

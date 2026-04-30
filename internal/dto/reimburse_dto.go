@@ -6,8 +6,8 @@ import (
 
 type ReimburseResponse struct {
 	db.InnerReimburse
-	EmployeeName string  `json:"employeeName"`
-	Department   string  `json:"department"`
+	EmployeeName string `json:"employeeName"`
+	Department   string `json:"department"`
 }
 
 type CreateReimburseRequest struct {

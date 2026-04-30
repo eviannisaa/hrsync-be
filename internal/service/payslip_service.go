@@ -49,7 +49,7 @@ func (s *payslipService) BulkUpload(ctx context.Context, items []dto.PayslipUplo
 		// Clean filename to match (e.g. "John Doe.pdf" -> "john doe")
 		cleanName := strings.TrimSuffix(strings.ToLower(item.Filename), ".pdf")
 		cleanName = strings.TrimSpace(cleanName)
-		
+
 		var matchedEmail string
 		for _, emp := range employees {
 			if strings.ToLower(emp.Name) == cleanName {

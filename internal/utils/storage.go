@@ -50,7 +50,7 @@ func InitMinio() {
 	}
 
 	MinioClient = client
-	
+
 	// Set bucket policy to public read
 	policy := fmt.Sprintf(`{
 		"Version": "2012-10-17",
@@ -63,7 +63,7 @@ func InitMinio() {
 			}
 		]
 	}`, bucketName)
-	
+
 	err = client.SetBucketPolicy(ctx, bucketName, policy)
 	if err != nil {
 		log.Printf("warning: failed to set bucket policy: %v", err)

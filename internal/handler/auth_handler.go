@@ -116,3 +116,29 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	utils.SendSuccess(w, "Login successful", resp, http.StatusOK)
 }
+
+// GeneratePassword godoc
+// @Summary Generate password untuk employee
+// @Description Menghasilkan password acak dan membuat akun User untuk employee
+// @Tags auth
+// @Produce json
+// @Param id path string true "Employee ID"
+// @Success 200 {object} utils.APIResponse
+// @Router /employees/{id}/generate-password [post]
+func (h *AuthHandler) GeneratePassword(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		utils.SendError(w, "Employee ID is required", http.StatusBadRequest)
+		return
+	}
+
+	password, err := h.srv.GeneratePassword(r.Context(), id)
+	if err != nil {
+		utils.SendError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.SendSuccess(w, "Password generated successfully", map[string]string{
+		"password": password,
+	}, http.StatusOK)
+}

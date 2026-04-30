@@ -80,15 +80,7 @@ func (r *templateKPIRepository) GetAll(ctx context.Context, params model.ListPar
 		items := make([]dto.KPIItemDTO, 0, len(du.Items()))
 		for _, it := range du.Items() {
 			items = append(items, dto.KPIItemDTO{
-				ID:         it.ID,
-				TemplateID: it.TemplateID,
-				NameResult: it.NameResult,
-				KpiResult:  it.KpiResult,
-				Weight:     it.Weight,
-				Target:     it.Target,
-				Actual:     it.Actual,
-				Score:      it.Score,
-				FinalScore: it.FinalScore,
+				InnerKPIItem: it.InnerKPIItem,
 			})
 		}
 
@@ -104,9 +96,9 @@ func (r *templateKPIRepository) GetAll(ctx context.Context, params model.ListPar
 func (r *templateKPIRepository) GetPublishedByDepartment(ctx context.Context, department string) ([]dto.TemplateKPIResponse, error) {
 	// Use case-insensitive matching for department
 	var rawTemplates []struct {
-		ID           string `json:"id"`
+		ID string `json:"id"`
 	}
-	
+
 	err := r.client.Prisma.QueryRaw(`
 		SELECT id FROM "TemplateKPI" 
 		WHERE LOWER(TRIM(department)) = LOWER(TRIM($1)) 
@@ -141,15 +133,7 @@ func (r *templateKPIRepository) GetPublishedByDepartment(ctx context.Context, de
 		items := make([]dto.KPIItemDTO, 0, len(du.Items()))
 		for _, it := range du.Items() {
 			items = append(items, dto.KPIItemDTO{
-				ID:         it.ID,
-				TemplateID: it.TemplateID,
-				NameResult: it.NameResult,
-				KpiResult:  it.KpiResult,
-				Weight:     it.Weight,
-				Target:     it.Target,
-				Actual:     it.Actual,
-				Score:      it.Score,
-				FinalScore: it.FinalScore,
+				InnerKPIItem: it.InnerKPIItem,
 			})
 		}
 
@@ -204,15 +188,7 @@ func (r *templateKPIRepository) Create(ctx context.Context, req dto.CreateTempla
 	items := make([]dto.KPIItemDTO, 0, len(full.Items()))
 	for _, it := range full.Items() {
 		items = append(items, dto.KPIItemDTO{
-			ID:         it.ID,
-			TemplateID: it.TemplateID,
-			NameResult: it.NameResult,
-			KpiResult:  it.KpiResult,
-			Weight:     it.Weight,
-			Target:     it.Target,
-			Actual:     it.Actual,
-			Score:      it.Score,
-			FinalScore: it.FinalScore,
+			InnerKPIItem: it.InnerKPIItem,
 		})
 	}
 
@@ -242,7 +218,7 @@ func (r *templateKPIRepository) Update(ctx context.Context, id string, req dto.U
 	if description == "" {
 		description = current.Description
 	}
-	
+
 	isPublished := current.IsPublished
 	if req.IsPublished != nil {
 		isPublished = *req.IsPublished
@@ -254,7 +230,7 @@ func (r *templateKPIRepository) Update(ctx context.Context, id string, req dto.U
 		db.TemplateKPI.Description.Set(description),
 		db.TemplateKPI.IsPublished.Set(isPublished),
 	}
-	
+
 	if req.Attachment != nil {
 		updateParams = append(updateParams, db.TemplateKPI.Attachment.SetOptional(req.Attachment))
 	} else {
@@ -305,15 +281,7 @@ func (r *templateKPIRepository) Update(ctx context.Context, id string, req dto.U
 	items := make([]dto.KPIItemDTO, 0, len(full.Items()))
 	for _, it := range full.Items() {
 		items = append(items, dto.KPIItemDTO{
-			ID:         it.ID,
-			TemplateID: it.TemplateID,
-			NameResult: it.NameResult,
-			KpiResult:  it.KpiResult,
-			Weight:     it.Weight,
-			Target:     it.Target,
-			Actual:     it.Actual,
-			Score:      it.Score,
-			FinalScore: it.FinalScore,
+			InnerKPIItem: it.InnerKPIItem,
 		})
 	}
 

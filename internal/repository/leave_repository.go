@@ -323,6 +323,21 @@ func (r *leaveRepository) Delete(ctx context.Context, id string) error {
 }
 
 func (r *leaveRepository) UpdateStatus(ctx context.Context, id string, status string) (*dto.LeaveResponse, error) {
+	// EVENT-DRIVEN: Instantly transition to ONGOING if approved today or after start date
+	if status == "APPROVED" {
+		current, err := r.client.Leave.FindUnique(db.Leave.ID.Equals(id)).Exec(ctx)
+		if err == nil {
+			now := time.Now()
+			today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+			tomorrow := today.Add(24 * time.Hour)
+
+			// If period has started or starts today, and has not ended yet
+			if !current.StartDate.After(tomorrow) && !current.EndDate.Before(today) {
+				status = "ONGOING"
+			}
+		}
+	}
+
 	du, err := r.client.Leave.FindUnique(
 		db.Leave.ID.Equals(id),
 	).Update(

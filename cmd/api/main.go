@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"hrsync-backend/internal/db"
 	"hrsync-backend/internal/handler"
@@ -9,7 +10,8 @@ import (
 	"hrsync-backend/internal/router"
 	"hrsync-backend/internal/service"
 	"hrsync-backend/internal/utils"
-	"context"
+	"hrsync-backend/internal/worker"
+	"hrsync-backend/pkg/external"
 
 	"log"
 	"net/http"
@@ -83,8 +85,9 @@ func main() {
 	fileHandler := handler.NewFileHandler()
 
 	// Holiday
+	holidayAPI := external.NewHolidayAPI()
 	holidayRepo := repository.NewHolidayRepository(client)
-	holidaySrv := service.NewHolidayService(holidayRepo)
+	holidaySrv := service.NewHolidayService(holidayRepo, holidayAPI)
 	holidayHandler := handler.NewHolidayHandler(holidaySrv)
 
 	// Payslip
@@ -92,12 +95,23 @@ func main() {
 	payslipSrv := service.NewPayslipService(payslipRepo, employeeRepo)
 	payslipHandler := handler.NewPayslipHandler(payslipSrv)
 
+	// Initialize Worker
+	leaveWorker := worker.NewLeaveWorker(leaveSrv)
+
 	// Background Sync Holidays for current, previous and next years
 	go func() {
 		holidaySrv.SyncHolidays(context.Background(), 2024)
 		holidaySrv.SyncHolidays(context.Background(), 2025)
 		holidaySrv.SyncHolidays(context.Background(), 2026)
 	}()
+
+	// Start Leave Worker
+	go leaveWorker.Start(context.Background())
+
+	// Seed Leave Types
+	if err := leaveTypeRepo.Seed(context.Background()); err != nil {
+		log.Printf("Failed to seed leave types: %v", err)
+	}
 
 	r := router.NewRouter(authHandler, employeeHandler, departmentHandler, leaveHandler, leaveTypeHandler, overtimeHandler, reimburseHandler, feedbackHandler, kpiHandler, fileHandler, holidayHandler, payslipHandler)
 

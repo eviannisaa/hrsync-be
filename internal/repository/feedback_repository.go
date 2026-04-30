@@ -66,25 +66,11 @@ func (r *feedbackRepository) GetAll(ctx context.Context, params model.ListParams
 		updatedAt := du.UpdatedAt
 		createdBy, _ := du.CreatedBy()
 		responses = append(responses, dto.FeedbackResponse{
-			ID:                         du.ID,
-			Email:                      du.Email,
-			EmployeeName:               du.EmployeeName,
-			EmployeeEmail:              du.EmployeeEmail,
-			EmployeeDepartment:         du.EmployeeDepartment,
-			Month:                      du.Month,
-			IsAnonymouse:               du.IsAnonymouse,
-			PositiveExperience:         du.PositiveExperience,
-			Suggestion:                 du.Suggestion,
-			WorkEnvironment:            du.WorkEnvironment,
-			WorkQualityReliability:     du.WorkQualityReliability,
-			CollaborationCommunication: du.CollaborationCommunication,
-			WorkLifeBalance:            du.WorkLifeBalance,
-			CriticalThinking:           du.CriticalThinking,
-			OverallSatisfaction:        du.OverallSatisfaction,
-			Score:                      float64(du.Score),
-			CreatedAt:                  &createdAt,
-			UpdatedAt:                  &updatedAt,
-			CreatedBy:                  string(createdBy),
+			InnerFeedback: du.InnerFeedback,
+			Score:         float64(du.Score),
+			CreatedAt:     &createdAt,
+			UpdatedAt:     &updatedAt,
+			CreatedBy:     string(createdBy),
 		})
 	}
 
@@ -121,25 +107,11 @@ func (r *feedbackRepository) Create(ctx context.Context, req dto.CreateFeedbackR
 	updatedAt := du.UpdatedAt
 	createdBy, _ := du.CreatedBy()
 	return &dto.FeedbackResponse{
-		ID:                         du.ID,
-		Email:                      du.Email,
-		EmployeeName:               du.EmployeeName,
-		EmployeeEmail:              du.EmployeeEmail,
-		EmployeeDepartment:         du.EmployeeDepartment,
-		Month:                      du.Month,
-		IsAnonymouse:               du.IsAnonymouse,
-		PositiveExperience:         du.PositiveExperience,
-		Suggestion:                 du.Suggestion,
-		WorkEnvironment:            du.WorkEnvironment,
-		WorkQualityReliability:     du.WorkQualityReliability,
-		CollaborationCommunication: du.CollaborationCommunication,
-		WorkLifeBalance:            du.WorkLifeBalance,
-		CriticalThinking:           du.CriticalThinking,
-		OverallSatisfaction:        du.OverallSatisfaction,
-		Score:                      float64(du.Score),
-		CreatedAt:                  &createdAt,
-		UpdatedAt:                  &updatedAt,
-		CreatedBy:                  string(createdBy),
+		InnerFeedback: du.InnerFeedback,
+		Score:         float64(du.Score),
+		CreatedAt:     &createdAt,
+		UpdatedAt:     &updatedAt,
+		CreatedBy:     string(createdBy),
 	}, nil
 }
 

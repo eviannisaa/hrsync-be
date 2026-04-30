@@ -123,6 +123,9 @@ func (r *overtimeRepository) Create(ctx context.Context, req dto.CreateOvertimeR
 		db.Overtime.StartDate.Set(req.StartDate),
 		db.Overtime.StartTime.Set(req.StartTime),
 		db.Overtime.Employee.Link(db.Employee.Email.Equals(req.Email)),
+		// Optional fields below
+		db.Overtime.IsDeployment.Set(req.IsDeployment),
+		db.Overtime.IsAdditionalLeave.Set(req.IsAdditionalLeave),
 		db.Overtime.Duration.Set(duration),
 	).Exec(ctx)
 
@@ -187,6 +190,14 @@ func (r *overtimeRepository) Update(ctx context.Context, id string, req dto.Upda
 
 	if req.Description != nil {
 		params = append(params, db.Overtime.Description.Set(*req.Description))
+	}
+
+	if req.IsDeployment != nil {
+		params = append(params, db.Overtime.IsDeployment.Set(*req.IsDeployment))
+	}
+
+	if req.IsAdditionalLeave != nil {
+		params = append(params, db.Overtime.IsAdditionalLeave.Set(*req.IsAdditionalLeave))
 	}
 
 	// Recalculate duration automatically in backend
@@ -255,6 +266,40 @@ func (r *overtimeRepository) UpdateStatus(ctx context.Context, id string, status
 
 	if err != nil {
 		return nil, err
+	}
+
+	// If approved and converted to additional leave, add 1 day to the employee's Additional Leave balance
+	if status == "APPROVED" && du.IsAdditionalLeave {
+		// Find "Additional Leave" type
+		leaveType, err := r.client.LeaveType.FindUnique(db.LeaveType.Name.Equals("Additional Leave")).Exec(ctx)
+		if err == nil {
+			year := time.Now().Year()
+			// Find or create balance
+			balance, err := r.client.LeaveBalance.FindUnique(
+				db.LeaveBalance.EmailLeaveTypeIDYear(
+					db.LeaveBalance.Email.Equals(du.Email),
+					db.LeaveBalance.LeaveTypeID.Equals(leaveType.ID),
+					db.LeaveBalance.Year.Equals(year),
+				),
+			).Exec(ctx)
+
+			if err == nil {
+				// Increment total by 1
+				_, _ = r.client.LeaveBalance.FindUnique(db.LeaveBalance.ID.Equals(balance.ID)).Update(
+					db.LeaveBalance.Total.Set(balance.Total+1),
+					db.LeaveBalance.Remaining.Set(balance.Remaining+1),
+				).Exec(ctx)
+			} else {
+				// Create the balance if it doesn't exist
+				_, _ = r.client.LeaveBalance.CreateOne(
+					db.LeaveBalance.Email.Set(du.Email),
+					db.LeaveBalance.Total.Set(1),
+					db.LeaveBalance.Remaining.Set(1),
+					db.LeaveBalance.Year.Set(year),
+					db.LeaveBalance.LeaveType.Link(db.LeaveType.ID.Equals(leaveType.ID)),
+				).Exec(ctx)
+			}
+		}
 	}
 
 	return &dto.OvertimeResponse{InnerOvertime: du.InnerOvertime}, nil

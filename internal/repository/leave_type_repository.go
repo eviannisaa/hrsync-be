@@ -11,6 +11,7 @@ type LeaveTypeRepository interface {
 	GetAll(ctx context.Context) ([]dto.LeaveTypeResponse, error)
 	GetMyCredits(ctx context.Context, email string) ([]dto.LeaveBalanceResponse, error)
 	Seed(ctx context.Context) error
+	InitializeBalances(ctx context.Context, email string) error
 }
 
 type leaveTypeRepository struct {
@@ -48,6 +49,27 @@ func (r *leaveTypeRepository) GetMyCredits(ctx context.Context, email string) ([
 
 	if err != nil {
 		return nil, err
+	}
+
+	// If no balances found, initialize them automatically
+	if len(balances) == 0 {
+		err := r.InitializeBalances(ctx, email)
+		if err != nil {
+			return nil, err
+		}
+		// Refetch after initialization
+		balances, err = r.client.LeaveBalance.FindMany(
+			db.LeaveBalance.Email.Equals(email),
+		).With(
+			db.LeaveBalance.LeaveType.Fetch(),
+		).Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(balances) == 0 {
+		return []dto.LeaveBalanceResponse{}, nil
 	}
 
 	// Dynamically compute how many days have actually been consumed per leave type
@@ -147,6 +169,37 @@ func (r *leaveTypeRepository) Seed(ctx context.Context) error {
 			db.LeaveType.DefaultDays.Set(t.Days),
 		).Update(
 			db.LeaveType.DefaultDays.Set(t.Days),
+		).Exec(ctx)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *leaveTypeRepository) InitializeBalances(ctx context.Context, email string) error {
+	types, err := r.client.LeaveType.FindMany().Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	year := time.Now().Year()
+	for _, t := range types {
+		_, err := r.client.LeaveBalance.UpsertOne(
+			db.LeaveBalance.EmailLeaveTypeIDYear(
+				db.LeaveBalance.Email.Equals(email),
+				db.LeaveBalance.LeaveTypeID.Equals(t.ID),
+				db.LeaveBalance.Year.Equals(year),
+			),
+		).Create(
+			db.LeaveBalance.Email.Set(email),
+			db.LeaveBalance.Total.Set(t.DefaultDays),
+			db.LeaveBalance.Remaining.Set(t.DefaultDays),
+			db.LeaveBalance.Year.Set(year),
+			db.LeaveBalance.LeaveType.Link(db.LeaveType.ID.Equals(t.ID)),
+		).Update(
+			db.LeaveBalance.Total.Set(t.DefaultDays),
+			db.LeaveBalance.Remaining.Set(t.DefaultDays),
 		).Exec(ctx)
 		if err != nil {
 			return err

@@ -46,7 +46,7 @@ func SeedLeaves(ctx context.Context, client *db.PrismaClient) {
 			if t.Name == "Annual Leave" {
 				used = 4
 			}
-			
+
 			remaining := t.Days
 			if t.Days != -1 {
 				remaining = t.Days - used

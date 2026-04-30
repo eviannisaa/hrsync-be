@@ -19,7 +19,7 @@ func NewPayslipHandler(srv service.PayslipService) *PayslipHandler {
 
 func (h *PayslipHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	email := r.URL.Query().Get("email")
-	
+
 	role, _ := r.Context().Value(model.ContextKeyRole).(string)
 	userEmail, _ := r.Context().Value(model.ContextKeyEmail).(string)
 
@@ -27,7 +27,7 @@ func (h *PayslipHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	if role == "EMPLOYEE" {
 		email = userEmail
 	}
-	
+
 	payslips, err := h.srv.GetPayslips(r.Context(), email)
 	if err != nil {
 		utils.SendError(w, err.Error(), http.StatusInternalServerError)

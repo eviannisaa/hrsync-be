@@ -258,4 +258,3 @@ func (r *employeeRepository) UpdateOrganization(ctx context.Context, req dto.Upd
 		UpdatedAt:         res.UpdatedAt,
 	}, nil
 }
-
