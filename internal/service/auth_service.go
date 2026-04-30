@@ -10,6 +10,7 @@ type AuthService interface {
 	Register(ctx context.Context, req dto.RegisterRequest) (*dto.AuthResponse, error)
 	Login(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponse, error)
 	GeneratePassword(ctx context.Context, employeeId string) (string, error)
+	HandleGoogleAuth(ctx context.Context, email string) (*dto.AuthResponse, error)
 }
 
 type authService struct {
@@ -30,4 +31,8 @@ func (s *authService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Aut
 
 func (s *authService) GeneratePassword(ctx context.Context, employeeId string) (string, error) {
 	return s.repo.GeneratePassword(ctx, employeeId)
+}
+
+func (s *authService) HandleGoogleAuth(ctx context.Context, email string) (*dto.AuthResponse, error) {
+	return s.repo.HandleGoogleAuth(ctx, email)
 }

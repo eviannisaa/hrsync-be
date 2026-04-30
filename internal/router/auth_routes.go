@@ -15,6 +15,12 @@ func RegisterAuthRoutes(mux *http.ServeMux, authHandler *handler.AuthHandler, em
 	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
 	mux.HandleFunc("POST /api/auth/logout", authHandler.Logout)
 
+	// Google Auth (Registering both v1 and non-v1 for compatibility)
+	mux.HandleFunc("/api/auth/google/login", authHandler.GoogleLogin)
+	mux.HandleFunc("/api/auth/google/callback", authHandler.GoogleCallback)
+	mux.HandleFunc("/api/v1/auth/google/login", authHandler.GoogleLogin)
+	mux.HandleFunc("/api/v1/auth/google/callback", authHandler.GoogleCallback)
+
 	// Protected Generate Password route
 	mux.Handle("POST /api/employees/{id}/generate-password", middleware.AuthMiddleware(http.HandlerFunc(authHandler.GeneratePassword)))
 

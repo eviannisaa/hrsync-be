@@ -2,12 +2,26 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"hrsync-backend/internal/dto"
 	"hrsync-backend/internal/service"
 	"hrsync-backend/internal/utils"
 	"net/http"
+	"net/url"
+	"os"
 	"time"
 )
+
+func getGoogleAuthURL() string {
+	baseURL := "https://accounts.google.com/o/oauth2/v2/auth"
+	v := url.Values{}
+	v.Set("client_id", os.Getenv("GOOGLE_CLIENT_ID"))
+	v.Set("redirect_uri", os.Getenv("GOOGLE_REDIRECT_URL"))
+	v.Set("response_type", "code")
+	v.Set("scope", "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile")
+	v.Set("state", "state") // Should be random in production
+	return baseURL + "?" + v.Encode()
+}
 
 type AuthHandler struct {
 	srv service.AuthService
@@ -141,4 +155,78 @@ func (h *AuthHandler) GeneratePassword(w http.ResponseWriter, r *http.Request) {
 	utils.SendSuccess(w, "Password generated successfully", map[string]string{
 		"password": password,
 	}, http.StatusOK)
+}
+
+func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("[AuthHandler] GoogleLogin hit")
+	http.Redirect(w, r, getGoogleAuthURL(), http.StatusTemporaryRedirect)
+}
+
+func (h *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("[AuthHandler] GoogleCallback hit")
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		utils.SendError(w, "Code not found", http.StatusBadRequest)
+		return
+	}
+
+	// 1. Exchange code for token
+	tokenRes, err := http.PostForm("https://oauth2.googleapis.com/token", url.Values{
+		"code":          {code},
+		"client_id":     {os.Getenv("GOOGLE_CLIENT_ID")},
+		"client_secret": {os.Getenv("GOOGLE_CLIENT_SECRET")},
+		"redirect_uri":  {os.Getenv("GOOGLE_REDIRECT_URL")},
+		"grant_type":    {"authorization_code"},
+	})
+	if err != nil {
+		utils.SendError(w, "Failed to exchange token", http.StatusInternalServerError)
+		return
+	}
+	defer tokenRes.Body.Close()
+
+	var tokenData struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err := json.NewDecoder(tokenRes.Body).Decode(&tokenData); err != nil {
+		utils.SendError(w, "Failed to decode token", http.StatusInternalServerError)
+		return
+	}
+
+	// 2. Get user info
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", "https://www.googleapis.com/oauth2/v2/userinfo", nil)
+	req.Header.Set("Authorization", "Bearer "+tokenData.AccessToken)
+	userRes, err := client.Do(req)
+	if err != nil {
+		utils.SendError(w, "Failed to get user info", http.StatusInternalServerError)
+		return
+	}
+	defer userRes.Body.Close()
+
+	var userinfo struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(userRes.Body).Decode(&userinfo); err != nil {
+		utils.SendError(w, "Failed to decode user info", http.StatusInternalServerError)
+		return
+	}
+
+	resp, err := h.srv.HandleGoogleAuth(r.Context(), userinfo.Email)
+	if err != nil {
+		utils.SendError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// 3. Set cookie and redirect
+	http.SetCookie(w, &http.Cookie{
+		Name:     "hrsync_token",
+		Value:    resp.Token,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Now().Add(24 * time.Hour),
+	})
+
+	http.Redirect(w, r, "http://localhost:3000/overview", http.StatusTemporaryRedirect)
 }

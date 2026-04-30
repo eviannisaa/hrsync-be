@@ -16,6 +16,7 @@ type AuthRepository interface {
 	Register(ctx context.Context, req dto.RegisterRequest) (*dto.AuthResponse, error)
 	Login(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponse, error)
 	GeneratePassword(ctx context.Context, employeeId string) (string, error)
+	HandleGoogleAuth(ctx context.Context, email string) (*dto.AuthResponse, error)
 }
 
 type authRepository struct {
@@ -165,3 +166,43 @@ func (r *authRepository) GeneratePassword(ctx context.Context, employeeId string
 
 	return plainPassword, nil
 }
+
+func (r *authRepository) HandleGoogleAuth(ctx context.Context, email string) (*dto.AuthResponse, error) {
+	// 1. Check if user already exists
+	user, _ := r.GetByEmail(ctx, email)
+
+	if user == nil {
+		// 2. If not, check if email belongs to an employee
+		emp, err := r.client.Employee.FindUnique(db.Employee.Email.Equals(email)).Exec(ctx)
+		if err != nil {
+			// If not an employee, either reject or create a standalone user.
+			// Let's create a standalone user with RoleEmployee for now.
+			user, err = r.Create(ctx, email, "", db.RoleEmployee, nil)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// Link to existing employee
+			user, err = r.Create(ctx, email, "", db.RoleEmployee, &emp.ID)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	// 3. Generate JWT
+	token, err := utils.GenerateToken(user.ID, user.Email, string(user.Role))
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.AuthResponse{
+		Token: token,
+		User: dto.UserInfoResponse{
+			ID:    user.ID,
+			Email: user.Email,
+			Role:  string(user.Role),
+		},
+	}, nil
+}
+
